@@ -8,6 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DocumentsPage() {
   const session = await getServerSession(authOptions);
   if (!session) return null;
@@ -74,8 +76,8 @@ export default async function DocumentsPage() {
                     {doc.status}
                   </span>
                 </TableCell>
-                <TableCell className="space-x-3">
-                  <Link href={`/dashboard/documents/${doc.id}`} className="text-blue-600 hover:underline text-sm mr-2">แก้ไข</Link>
+                <TableCell className="flex items-center gap-3">
+                  <Link href={`/dashboard/documents/${doc.id}`} className="text-blue-600 hover:underline text-sm font-medium">แก้ไข</Link>
                   <PDFModal document={doc} settings={settings} />
                 </TableCell>
               </TableRow>

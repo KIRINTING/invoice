@@ -2,7 +2,13 @@ import DocumentForm from "@/components/DocumentForm";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+
 export default async function EditDocumentPage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions);
+  const isAdmin = session?.user?.role === 'ADMIN';
+
   const { id } = await params;
   const document = await prisma.document.findUnique({ 
     where: { id },
@@ -16,7 +22,7 @@ export default async function EditDocumentPage({ params }: { params: Promise<{ i
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">แก้ไขเอกสาร</h1>
-      <DocumentForm initialData={document} clients={clients} />
+      <DocumentForm initialData={document} clients={clients} isAdmin={isAdmin} />
     </div>
   )
 }

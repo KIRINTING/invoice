@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ClientsPage() {
   const session = await getServerSession(authOptions);
   if (!session) return null;

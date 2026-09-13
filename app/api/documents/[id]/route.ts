@@ -45,7 +45,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
-  if (!session) return new NextResponse("Unauthorized", { status: 401 });
+  if (!session || session.user.role !== 'ADMIN') {
+    return new NextResponse("Unauthorized (Admin Only)", { status: 403 });
+  }
 
   try {
     const { id } = await params;

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Plus, Trash2 } from "lucide-react"
 
-export default function DocumentForm({ initialData = null, clients }: { initialData?: any, clients: any[] }) {
+export default function DocumentForm({ initialData = null, clients, isAdmin = false, sourceDocs = [] }: { initialData?: any, clients: any[], isAdmin?: boolean, sourceDocs?: any[] }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const defaultType = searchParams.get("type") || "QUOTATION"
@@ -98,8 +98,8 @@ export default function DocumentForm({ initialData = null, clients }: { initialD
       }))
     }
 
-    const url = initialData ? `/api/documents/${initialData.id}` : "/api/documents"
-    const method = initialData ? "PUT" : "POST"
+    const url = initialData?.id ? `/api/documents/${initialData.id}` : "/api/documents"
+    const method = initialData?.id ? "PUT" : "POST"
 
     const res = await fetch(url, {
       method,
@@ -126,6 +126,39 @@ export default function DocumentForm({ initialData = null, clients }: { initialD
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
+      {!initialData?.id && sourceDocs.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center gap-4">
+          <Label className="text-blue-800 whitespace-nowrap">อ้างอิงข้อมูลจากเอกสารเดิม:</Label>
+          <select 
+            className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            onChange={(e) => {
+              if (e.target.value) {
+                // Determine target type: if QUOTATION -> INVOICE, if INVOICE -> RECEIPT
+                const selectedDoc = sourceDocs.find(d => d.id === e.target.value);
+                let targetType = 'INVOICE';
+                if (selectedDoc) {
+                  if (selectedDoc.type === 'QUOTATION') targetType = 'INVOICE';
+                  else if (selectedDoc.type === 'INVOICE') targetType = 'RECEIPT';
+                }
+                router.push(`/dashboard/documents/new?type=${targetType}&fromId=${e.target.value}`);
+              } else {
+                router.push(`/dashboard/documents/new`);
+              }
+            }}
+            defaultValue={searchParams.get('fromId') || ""}
+          >
+            <option value="">-- ไม่ต้องอ้างอิง --</option>
+            {sourceDocs.map(doc => {
+              const typeLabel = doc.type === 'QUOTATION' ? 'ใบเสนอราคา' : doc.type === 'INVOICE' ? 'ใบแจ้งหนี้' : 'ใบเสร็จ';
+              return (
+                <option key={doc.id} value={doc.id}>
+                  {doc.number} ({typeLabel}) - ลูกค้า: {doc.client?.name}
+                </option>
+              )
+            })}
+          </select>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-lg border shadow-sm">
         <div className="space-y-2">
           <Label>ประเภทเอกสาร</Label>
@@ -262,7 +295,7 @@ export default function DocumentForm({ initialData = null, clients }: { initialD
       <div className="flex justify-between pb-10">
         <Button type="button" variant="outline" onClick={() => router.push("/dashboard/documents")}>ยกเลิก</Button>
         <div className="space-x-2">
-          {initialData && (
+          {initialData?.id && isAdmin && (
             <Button type="button" variant="destructive" onClick={handleDelete} disabled={loading}>ลบ</Button>
           )}
           <Button type="submit" disabled={loading}>{loading ? "กำลังบันทึก..." : "บันทึก"}</Button>
