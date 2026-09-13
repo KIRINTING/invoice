@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(USER)
+  documents     Document[]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Document {
+  id          String        @id @default(cuid())
+  type        DocumentType
+  number      String        @unique
+  date        DateTime      @default(now())
+  dueDate     DateTime?
+  status      DocumentStatus @default(DRAFT)
+  
+  clientId    String
+  client      Client        @relation(fields: [clientId], references: [id])
+  
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  
+  items       Item[]
+  
+  subtotal    Float
+  discount    Float         @default(0)
+  vatType     String        @default("EXCLUSIVE")
+  taxRate     Float         @default(7)
+  taxAmount   Float
+  total       Float
+  
+  notes       String?       @db.Text
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+enum DocumentType {
+  QUOTATION
+  INVOICE
+  RECEIPT
+}
+
+enum DocumentStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+model Client {
+  id          String      @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  address     String?     @db.Text
+  taxId       String?
+  documents   Document[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Item {
+  id          String    @id @default(cuid())
+  description String
+  quantity    Int       @default(1)
+  unitPrice   Float
+  amount      Float
+  
+  documentId  String
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model Setting {
+  key   String @id
+  value String @db.Text
+}
+
